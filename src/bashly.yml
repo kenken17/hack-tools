@@ -1,0 +1,14 @@
+name: h
+help: Hacker Tools
+version: 0.1.0
+commands:
+  - name: dns
+    help: DNS related actions
+    args:
+      - name: target
+        help: "Target url"
+    flags:
+      - long: --tool
+        help: "Tool for dns related actions (default: dig)"
+    examples:
+      - t dns example.com
