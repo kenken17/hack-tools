@@ -75,8 +75,13 @@ h_dns_usage() {
 
     # :command.usage_flags
     # :flag.usage
-    printf "  %s\n" "--tool"
+    printf "  %s\n" "--tool TOOL_ARG"
     printf "    Tool for dns related actions (default: dig)\n"
+    echo
+
+    # :flag.usage
+    printf "  %s\n" "--type, -t TYPE_ARG"
+    printf "    Type of server to discover (default: any)\n"
     echo
 
     # :command.usage_fixed_flags
@@ -165,13 +170,46 @@ inspect_args() {
   fi
 }
 
+# :command.user_lib
+# src/lib/colors.sh
+print_in_color() {
+  local color="$1"
+  shift
+  if [[ -z ${NO_COLOR+x} ]]; then
+    printf "$color%b\e[0m\n" "$*"
+  else
+    printf "%b\n" "$*"
+  fi
+}
+
+red() { print_in_color "\e[31m" "$*"; }
+green() { print_in_color "\e[32m" "$*"; }
+yellow() { print_in_color "\e[33m" "$*"; }
+blue() { print_in_color "\e[34m" "$*"; }
+magenta() { print_in_color "\e[35m" "$*"; }
+cyan() { print_in_color "\e[36m" "$*"; }
+bold() { print_in_color "\e[1m" "$*"; }
+underlined() { print_in_color "\e[4m" "$*"; }
+red_bold() { print_in_color "\e[1;31m" "$*"; }
+green_bold() { print_in_color "\e[1;32m" "$*"; }
+yellow_bold() { print_in_color "\e[1;33m" "$*"; }
+blue_bold() { print_in_color "\e[1;34m" "$*"; }
+magenta_bold() { print_in_color "\e[1;35m" "$*"; }
+cyan_bold() { print_in_color "\e[1;36m" "$*"; }
+red_underlined() { print_in_color "\e[4;31m" "$*"; }
+green_underlined() { print_in_color "\e[4;32m" "$*"; }
+yellow_underlined() { print_in_color "\e[4;33m" "$*"; }
+blue_underlined() { print_in_color "\e[4;34m" "$*"; }
+magenta_underlined() { print_in_color "\e[4;35m" "$*"; }
+cyan_underlined() { print_in_color "\e[4;36m" "$*"; }
+
 # :command.command_functions
 # :command.function
 h_dns_command() {
   # src/dns_command.sh
   target=${args[target]}
-  tool=${args[tool]}
-  type=${args[type]}
+  tool=${args[--tool]}
+  type=${args[--type]}
 
   if [[ -z $tool ]]; then
     tool=dig
@@ -184,7 +222,7 @@ h_dns_command() {
   command="$tool $target -t $type"
 
   # print
-  echo -e "Command:" "$command"
+  echo -e "$(green Command:)" "$(yellow "$command")"
 
   # execute
   $command
@@ -291,9 +329,29 @@ h_dns_parse_requirements() {
       # :flag.case
       --tool)
 
-        # :flag.case_no_arg
-        args['--tool']=1
-        shift
+        # :flag.case_arg
+        if [[ -n ${2+x} ]]; then
+          args['--tool']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--tool requires an argument: --tool TOOL_ARG" >&2
+          exit 1
+        fi
+        ;;
+
+      # :flag.case
+      --type | -t)
+
+        # :flag.case_arg
+        if [[ -n ${2+x} ]]; then
+          args['--type']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--type requires an argument: --type, -t TYPE_ARG" >&2
+          exit 1
+        fi
         ;;
 
       -?*)

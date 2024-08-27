@@ -10,5 +10,10 @@ commands:
     flags:
       - long: --tool
         help: "Tool for dns related actions (default: dig)"
+        arg: tool_arg
+      - long: --type
+        short: -t
+        arg: type_arg
+        help: "Type of server to discover (default: any)"
     examples:
       - t dns example.com
