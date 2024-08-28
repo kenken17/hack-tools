@@ -37,5 +37,7 @@ commands:
         short: -w
         arg: wordlist_arg
         help: "Wordlist to fuzz (default: dns:/opt/fuzzdb/discovery/dns/dnsmapCommonSubdomains.txt dir:)"
+      - long: --secure
+        help: "Set the protocol to use https"
     examples:
       - t fuzz example.com
