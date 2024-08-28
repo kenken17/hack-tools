@@ -25,7 +25,7 @@ if [[ -z $wordlist ]]; then
   fi
 fi
 
-command="$tool -u http://$target -c -H \"Host: FUZZ.$target\" -w $wordlist"
+command="$tool -c -fs 0 -u http://$target -w $wordlist -H \"Host: FUZZ.$target\""
 
 # print
 echo -e "$(green Command:)" "$(yellow "$command")"
