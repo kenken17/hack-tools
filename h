@@ -326,7 +326,7 @@ h_fuzz_command() {
     fi
   fi
 
-  command="$tool $target -c -H \"Host: FUZZ.$target\" -w $wordlist"
+  command="$tool $target -u http://$target -c -H \"Host: FUZZ.$target\" -w $wordlist"
 
   # print
   echo -e "$(green Command:)" "$(yellow "$command")"
