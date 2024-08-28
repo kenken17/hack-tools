@@ -355,7 +355,7 @@ h_fuzz_command() {
     url="-u $protocol://$target/FUZZ"
   fi
 
-  command="$tool -c -fs 0 $url $wordlist $params"
+  command="$tool -c $url $wordlist $params"
 
   # print
   echo -e "$(green Command:)" "$(yellow "$command")"
