@@ -298,7 +298,7 @@ h_dns_command() {
 
   # execute
   if [[ -z $DEBUG ]]; then
-    eval $command
+    eval "$command"
   fi
 
 }
@@ -311,9 +311,6 @@ h_fuzz_command() {
   type=${args[--type]}
   wordlist=${args[--wordlist]}
   secure=${args[--secure]}
-  params=
-  url=
-  protocol=http
 
   if [[ -z $target ]]; then
     if [[ -z $RHOST ]]; then
@@ -324,37 +321,35 @@ h_fuzz_command() {
     target=$RHOST
   fi
 
-  if [[ -z $tool ]]; then
-    tool=ffuf
+  # default tool
+  checkAndSetIfEmpty tool "ffuf"
+
+  # default action
+  checkAndSetIfEmpty type "dns"
+
+  if [[ -n $wordlist ]]; then
+    wordlist="-w $wordlist"
+  else
+    wordlist=x
+
+    checkAndSetIfEqual type "dns" "-w \"/opt/fuzzdb/discovery/dns/dnsmapCommonSubdomains.txt\"" wordlist
+
+    checkAndSetIfEqual type "dir" "-w \"/opt/fuzzdb/discovery/predictable-filepaths/filename-dirname-bruteforce/raft-small-directories-lowercase.txt\"" wordlist
   fi
 
-  if [[ -z $type ]]; then
-    type=dns
-  fi
+  # default http
+  protocol=http
+  checkAndSetIfExisted secure "https" protocol
 
-  if [[ -z $wordlist ]]; then
-    if [[ "$type" == "dns" ]]; then
-      wordlist="-w \"/opt/fuzzdb/discovery/dns/dnsmapCommonSubdomains.txt\""
-    fi
+  # default host
+  params="-H \"Host: FUZZ.$target\""
+  checkAndSetIfEqual type "dir" "" params
 
-    if [[ "$type" == "dir" ]]; then
-      wordlist="-w \"/opt/fuzzdb/discovery/predictable-filepaths/filename-dirname-bruteforce/raft-small-directories-lowercase.txt\""
-    fi
-  fi
+  # default just domain
+  url="-u $protocol://$target"
+  checkAndSetIfEqual type "dir" "-u $protocol://$target/FUZZ" url
 
-  if [[ -n "$secure" ]]; then
-    protocol=https
-  fi
-
-  if [[ "$type" == "dns" ]]; then
-    params="-H \"Host: FUZZ.$target\""
-    url="-u $protocol://$target"
-  fi
-
-  if [[ "$type" == "dir" ]]; then
-    url="-u $protocol://$target/FUZZ"
-  fi
-
+  # form the command
   command="$tool -c $url $wordlist $params"
 
   # print
@@ -362,7 +357,7 @@ h_fuzz_command() {
 
   # execute
   if [[ -z $DEBUG ]]; then
-    eval $command
+    eval "$command"
   fi
 
 }
@@ -626,11 +621,61 @@ h_fuzz_parse_requirements() {
 
 }
 
+# :command.user_hooks
+before_hook() {
+  # src/before.sh
+  echo "==[ Before Hook Called ]=="
+  inspect_args
+}
+
+after_hook() {
+  # src/after.sh
+  echo "==[ After Hook Called ]=="
+}
+
 # :command.initialize
 initialize() {
   version="0.1.0"
   long_usage=''
   set -e
+
+  # src/initialize.sh
+  # Check and set if emtpy
+  checkAndSetIfEmpty() {
+    local -n item=$1
+
+    if [[ -z $item ]]; then
+      item=$2
+    fi
+  }
+
+  # Check and set if existed
+  checkAndSetIfExisted() {
+    local -n item=$1
+    local -n param_to_set=$3
+
+    if [[ $item == 1 ]]; then
+      if [[ -n $param_to_set ]]; then
+        param_to_set=$2
+      else
+        item=$2
+      fi
+    fi
+  }
+
+  # Check and set if equal
+  checkAndSetIfEqual() {
+    local -n item=$1
+    local -n param_to_set=$4
+
+    if [[ $item == "$2" ]]; then
+      if [[ -z $param_to_set ]]; then
+        item=$3
+      else
+        param_to_set=$3
+      fi
+    fi
+  }
 
 }
 
@@ -643,11 +688,14 @@ run() {
   declare -a input=()
   normalize_input "$@"
   parse_requirements "${input[@]}"
+  before_hook
 
   case "$action" in
     "dns") h_dns_command ;;
     "fuzz") h_fuzz_command ;;
   esac
+
+  after_hook
 }
 
 initialize

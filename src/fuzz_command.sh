@@ -3,9 +3,6 @@ tool=${args[--tool]}
 type=${args[--type]}
 wordlist=${args[--wordlist]}
 secure=${args[--secure]}
-params=
-url=
-protocol=http
 
 if [[ -z $target ]]; then
   if [[ -z $RHOST ]]; then
@@ -16,37 +13,35 @@ if [[ -z $target ]]; then
   target=$RHOST
 fi
 
-if [[ -z $tool ]]; then
-  tool=ffuf
+# default tool
+checkAndSetIfEmpty tool "ffuf"
+
+# default action
+checkAndSetIfEmpty type "dns"
+
+if [[ -n $wordlist ]]; then
+  wordlist="-w $wordlist"
+else
+  wordlist=x
+
+  checkAndSetIfEqual type "dns" "-w \"/opt/fuzzdb/discovery/dns/dnsmapCommonSubdomains.txt\"" wordlist
+
+  checkAndSetIfEqual type "dir" "-w \"/opt/fuzzdb/discovery/predictable-filepaths/filename-dirname-bruteforce/raft-small-directories-lowercase.txt\"" wordlist
 fi
 
-if [[ -z $type ]]; then
-  type=dns
-fi
+# default http
+protocol=http
+checkAndSetIfExisted secure "https" protocol
 
-if [[ -z $wordlist ]]; then
-  if [[ "$type" == "dns" ]]; then
-    wordlist="-w \"/opt/fuzzdb/discovery/dns/dnsmapCommonSubdomains.txt\""
-  fi
+# default host
+params="-H \"Host: FUZZ.$target\""
+checkAndSetIfEqual type "dir" "" params
 
-  if [[ "$type" == "dir" ]]; then
-    wordlist="-w \"/opt/fuzzdb/discovery/predictable-filepaths/filename-dirname-bruteforce/raft-small-directories-lowercase.txt\""
-  fi
-fi
+# default just domain
+url="-u $protocol://$target"
+checkAndSetIfEqual type "dir" "-u $protocol://$target/FUZZ" url
 
-if [[ -n "$secure" ]]; then
-  protocol=https
-fi
-
-if [[ "$type" == "dns" ]]; then
-  params="-H \"Host: FUZZ.$target\""
-  url="-u $protocol://$target"
-fi
-
-if [[ "$type" == "dir" ]]; then
-  url="-u $protocol://$target/FUZZ"
-fi
-
+# form the command
 command="$tool -c $url $wordlist $params"
 
 # print
@@ -54,5 +49,5 @@ echo -e "$(green Command:)" "$(yellow "$command")"
 
 # execute
 if [[ -z $DEBUG ]]; then
-  eval $command
+  eval "$command"
 fi
