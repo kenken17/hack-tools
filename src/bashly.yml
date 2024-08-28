@@ -1,6 +1,9 @@
 name: h
 help: Hacker Tools
 version: 0.1.0
+environment_variables:
+  - name: RHOST
+    private: false
 commands:
   - name: dns
     help: DNS related actions
@@ -17,3 +20,22 @@ commands:
         help: "Type of server to discover (default: any)"
     examples:
       - t dns example.com
+  - name: fuzz
+    help: Fuzz related actions
+    args:
+      - name: target
+        help: "Target url"
+    flags:
+      - long: --tool
+        help: "Tool for fuzz related actions (default: ffuf)"
+        arg: tool_arg
+      - long: --type
+        short: -t
+        arg: type_arg
+        help: "Type of thing to fuzz (default: dns)"
+      - long: --wordlist
+        short: -w
+        arg: wordlist_arg
+        help: "Wordlist to fuzz (default: dns:/opt/fuzzdb/discovery/dns/dnsmapCommonSubdomains.txt dir:)"
+    examples:
+      - t fuzz example.com

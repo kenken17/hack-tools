@@ -34,7 +34,8 @@ h_usage() {
   echo
   # :command.usage_commands
   printf "%s\n" "Commands:"
-  printf "  %s   DNS related actions\n" "dns"
+  printf "  %s   DNS related actions\n" "dns "
+  printf "  %s   Fuzz related actions\n" "fuzz"
   echo
 
   # :command.long_usage
@@ -47,6 +48,14 @@ h_usage() {
     echo
     printf "  %s\n" "--version, -v"
     printf "    Show version number\n"
+    echo
+
+    # :command.usage_environment_variables
+    printf "%s\n" "Environment Variables:"
+
+    # :environment_variable.usage
+    printf "  %s\n" "RHOST"
+    printf "\n"
     echo
 
   fi
@@ -100,6 +109,64 @@ h_dns_usage() {
     # :command.usage_examples
     printf "%s\n" "Examples:"
     printf "  t dns example.com\n"
+    echo
+
+  fi
+}
+
+# :command.usage
+h_fuzz_usage() {
+  if [[ -n $long_usage ]]; then
+    printf "h fuzz - Fuzz related actions\n"
+    echo
+
+  else
+    printf "h fuzz - Fuzz related actions\n"
+    echo
+
+  fi
+
+  printf "%s\n" "Usage:"
+  printf "  h fuzz [TARGET] [OPTIONS]\n"
+  printf "  h fuzz --help | -h\n"
+  echo
+
+  # :command.long_usage
+  if [[ -n $long_usage ]]; then
+    printf "%s\n" "Options:"
+
+    # :command.usage_flags
+    # :flag.usage
+    printf "  %s\n" "--tool TOOL_ARG"
+    printf "    Tool for fuzz related actions (default: ffuf)\n"
+    echo
+
+    # :flag.usage
+    printf "  %s\n" "--type, -t TYPE_ARG"
+    printf "    Type of thing to fuzz (default: dns)\n"
+    echo
+
+    # :flag.usage
+    printf "  %s\n" "--wordlist, -w WORDLIST_ARG"
+    printf "    Wordlist to fuzz (default:\n    dns:/opt/fuzzdb/discovery/dns/dnsmapCommonSubdomains.txt dir:)\n"
+    echo
+
+    # :command.usage_fixed_flags
+    printf "  %s\n" "--help, -h"
+    printf "    Show this help\n"
+    echo
+
+    # :command.usage_args
+    printf "%s\n" "Arguments:"
+
+    # :argument.usage
+    printf "  %s\n" "TARGET"
+    printf "    Target url\n"
+    echo
+
+    # :command.usage_examples
+    printf "%s\n" "Examples:"
+    printf "  t fuzz example.com\n"
     echo
 
   fi
@@ -229,6 +296,48 @@ h_dns_command() {
 
 }
 
+# :command.function
+h_fuzz_command() {
+  # src/fuzz_command.sh
+  target=${args[target]}
+  tool=${args[--tool]}
+  type=${args[--type]}
+
+  if [[ -z $target ]]; then
+    if [[ -z $RHOST ]]; then
+      echo -e "Invalid target/RHOST"
+      exit 1
+    fi
+
+    target=$RHOST
+  fi
+
+  if [[ -z $tool ]]; then
+    tool=ffuf
+  fi
+
+  if [[ -z $type ]]; then
+    type=dns
+  fi
+
+  if [[ -z $wordlist ]]; then
+    if [[ "$type" == "dns" ]]; then
+      wordlist=/opt/fuzzdb/discovery/dns/dnsmapCommonSubdomains.txt
+    fi
+  fi
+
+  command="$tool $target -c -H \"Host: FUZZ.$target\" -w $wordlist"
+
+  # print
+  echo -e "$(green Command:)" "$(yellow "$command")"
+
+  # execute
+  if [[ -z $DEBUG ]]; then
+    $command
+  fi
+
+}
+
 # :command.parse_requirements
 parse_requirements() {
   # :command.fixed_flags_filter
@@ -252,6 +361,10 @@ parse_requirements() {
     esac
   done
 
+  # :command.environment_variables_filter
+
+  env_var_names+=("RHOST")
+
   # :command.command_filter
   action=${1:-}
 
@@ -262,6 +375,13 @@ parse_requirements() {
       action="dns"
       shift
       h_dns_parse_requirements "$@"
+      shift $#
+      ;;
+
+    fuzz)
+      action="fuzz"
+      shift
+      h_fuzz_parse_requirements "$@"
       shift $#
       ;;
 
@@ -378,6 +498,97 @@ h_dns_parse_requirements() {
 
 }
 
+# :command.parse_requirements
+h_fuzz_parse_requirements() {
+  # :command.fixed_flags_filter
+  while [[ $# -gt 0 ]]; do
+    case "${1:-}" in
+      --help | -h)
+        long_usage=yes
+        h_fuzz_usage
+        exit
+        ;;
+
+      *)
+        break
+        ;;
+
+    esac
+  done
+
+  # :command.command_filter
+  action="fuzz"
+
+  # :command.parse_requirements_while
+  while [[ $# -gt 0 ]]; do
+    key="$1"
+    case "$key" in
+      # :flag.case
+      --tool)
+
+        # :flag.case_arg
+        if [[ -n ${2+x} ]]; then
+          args['--tool']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--tool requires an argument: --tool TOOL_ARG" >&2
+          exit 1
+        fi
+        ;;
+
+      # :flag.case
+      --type | -t)
+
+        # :flag.case_arg
+        if [[ -n ${2+x} ]]; then
+          args['--type']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--type requires an argument: --type, -t TYPE_ARG" >&2
+          exit 1
+        fi
+        ;;
+
+      # :flag.case
+      --wordlist | -w)
+
+        # :flag.case_arg
+        if [[ -n ${2+x} ]]; then
+          args['--wordlist']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--wordlist requires an argument: --wordlist, -w WORDLIST_ARG" >&2
+          exit 1
+        fi
+        ;;
+
+      -?*)
+        printf "invalid option: %s\n" "$key" >&2
+        exit 1
+        ;;
+
+      *)
+        # :command.parse_requirements_case
+        # :command.parse_requirements_case_simple
+        # :argument.case
+        if [[ -z ${args['target']+x} ]]; then
+          args['target']=$1
+          shift
+        else
+          printf "invalid argument: %s\n" "$key" >&2
+          exit 1
+        fi
+
+        ;;
+
+    esac
+  done
+
+}
+
 # :command.initialize
 initialize() {
   version="0.1.0"
@@ -398,6 +609,7 @@ run() {
 
   case "$action" in
     "dns") h_dns_command ;;
+    "fuzz") h_fuzz_command ;;
   esac
 }
 
