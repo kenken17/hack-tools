@@ -292,7 +292,9 @@ h_dns_command() {
   echo -e "$(green Command:)" "$(yellow "$command")"
 
   # execute
-  $command
+  if [[ -z $DEBUG ]]; then
+    eval $command
+  fi
 
 }
 
@@ -333,7 +335,7 @@ h_fuzz_command() {
 
   # execute
   if [[ -z $DEBUG ]]; then
-    $command
+    eval $command
   fi
 
 }

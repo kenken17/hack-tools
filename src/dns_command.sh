@@ -16,4 +16,6 @@ command="$tool $target -t $type"
 echo -e "$(green Command:)" "$(yellow "$command")"
 
 # execute
-$command
+if [[ -z $DEBUG ]]; then
+  eval $command
+fi

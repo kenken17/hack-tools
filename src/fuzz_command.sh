@@ -32,5 +32,5 @@ echo -e "$(green Command:)" "$(yellow "$command")"
 
 # execute
 if [[ -z $DEBUG ]]; then
-  $command
+  eval $command
 fi
