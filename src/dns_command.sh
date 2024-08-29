@@ -1,21 +1,17 @@
-target=${args[target]}
 tool=${args[--tool]}
 type=${args[--type]}
 
-if [[ -z $tool ]]; then
-  tool=dig
-fi
+# default tool
+checkAndSetIfEmpty tool "dig"
 
-if [[ -z $type ]]; then
-  type=any
-fi
+if [[ "$tool" == "dig" ]]; then
+  if [[ ! $(command -v "$tool") ]]; then
+    echo -e "$(red Missing "$tool")"
+    exit 1
+  fi
 
-command="$tool $target -t $type"
+  # default type
+  checkAndSetIfEmpty type "any"
 
-# print
-echo -e "$(green Command:)" "$(yellow "$command")"
-
-# execute
-if [[ -z $DEBUG ]]; then
-  eval "$command"
+  command="$tool $target -t $type"
 fi

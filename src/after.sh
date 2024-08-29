@@ -4,4 +4,12 @@
 ## after running any command.
 ##
 ## You can safely delete this file if you do not need it.
-echo "==[ After Hook Called ]=="
+
+# print
+echo -e "$(green Running command:)" "$(yellow "$command")"
+
+# execute
+if [[ -z $DEBUG ]]; then
+  eval "$command"
+fi
+

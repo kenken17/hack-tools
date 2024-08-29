@@ -6,3 +6,15 @@
 ## You can safely delete this file if you do not need it.
 echo "==[ Before Hook Called ]=="
 inspect_args
+
+target=${args[target]}
+
+if [[ -z $target ]]; then
+  if [[ -z $RHOST ]]; then
+    echo -e "$(red Invalid target/RHOST)"
+    exit 1
+  fi
+
+  target=$RHOST
+fi
+

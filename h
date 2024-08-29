@@ -27,34 +27,34 @@ h_usage() {
 
   fi
 
-  printf "%s\n" "Usage:"
+  printf "%s\n" "$(bold "Usage:")"
   printf "  h COMMAND\n"
   printf "  h [COMMAND] --help | -h\n"
   printf "  h --version | -v\n"
   echo
   # :command.usage_commands
-  printf "%s\n" "Commands:"
-  printf "  %s   DNS related actions\n" "dns "
-  printf "  %s   Fuzz related actions\n" "fuzz"
+  printf "%s\n" "$(bold "Commands:")"
+  printf "  %s   DNS related actions\n" "$(green "dns") "
+  printf "  %s   Fuzz related actions\n" "$(green "fuzz")"
   echo
 
   # :command.long_usage
   if [[ -n $long_usage ]]; then
-    printf "%s\n" "Options:"
+    printf "%s\n" "$(bold "Options:")"
 
     # :command.usage_fixed_flags
-    printf "  %s\n" "--help, -h"
+    printf "  %s\n" "$(magenta "--help, -h")"
     printf "    Show this help\n"
     echo
-    printf "  %s\n" "--version, -v"
+    printf "  %s\n" "$(magenta "--version, -v")"
     printf "    Show version number\n"
     echo
 
     # :command.usage_environment_variables
-    printf "%s\n" "Environment Variables:"
+    printf "%s\n" "$(bold "Environment Variables:")"
 
     # :environment_variable.usage
-    printf "  %s\n" "RHOST"
+    printf "  %s\n" "$(cyan "RHOST")"
     printf "\n"
     echo
 
@@ -73,41 +73,41 @@ h_dns_usage() {
 
   fi
 
-  printf "%s\n" "Usage:"
+  printf "%s\n" "$(bold "Usage:")"
   printf "  h dns [TARGET] [OPTIONS]\n"
   printf "  h dns --help | -h\n"
   echo
 
   # :command.long_usage
   if [[ -n $long_usage ]]; then
-    printf "%s\n" "Options:"
+    printf "%s\n" "$(bold "Options:")"
 
     # :command.usage_flags
     # :flag.usage
-    printf "  %s\n" "--tool TOOL_ARG"
+    printf "  %s\n" "$(magenta "--tool TOOL_ARG")"
     printf "    Tool for dns related actions (default: dig)\n"
     echo
 
     # :flag.usage
-    printf "  %s\n" "--type, -t TYPE_ARG"
+    printf "  %s\n" "$(magenta "--type, -t TYPE_ARG")"
     printf "    Type of server to discover (default: any)\n"
     echo
 
     # :command.usage_fixed_flags
-    printf "  %s\n" "--help, -h"
+    printf "  %s\n" "$(magenta "--help, -h")"
     printf "    Show this help\n"
     echo
 
     # :command.usage_args
-    printf "%s\n" "Arguments:"
+    printf "%s\n" "$(bold "Arguments:")"
 
     # :argument.usage
-    printf "  %s\n" "TARGET"
+    printf "  %s\n" "$(blue "TARGET")"
     printf "    Target url\n"
     echo
 
     # :command.usage_examples
-    printf "%s\n" "Examples:"
+    printf "%s\n" "$(bold "Examples:")"
     printf "  t dns example.com\n"
     echo
 
@@ -126,51 +126,51 @@ h_fuzz_usage() {
 
   fi
 
-  printf "%s\n" "Usage:"
+  printf "%s\n" "$(bold "Usage:")"
   printf "  h fuzz [TARGET] [OPTIONS]\n"
   printf "  h fuzz --help | -h\n"
   echo
 
   # :command.long_usage
   if [[ -n $long_usage ]]; then
-    printf "%s\n" "Options:"
+    printf "%s\n" "$(bold "Options:")"
 
     # :command.usage_flags
     # :flag.usage
-    printf "  %s\n" "--tool TOOL_ARG"
+    printf "  %s\n" "$(magenta "--tool TOOL_ARG")"
     printf "    Tool for fuzz related actions (default: ffuf)\n"
     echo
 
     # :flag.usage
-    printf "  %s\n" "--type, -t TYPE_ARG"
+    printf "  %s\n" "$(magenta "--type, -t TYPE_ARG")"
     printf "    Type of thing to fuzz (default: dns)\n"
     echo
 
     # :flag.usage
-    printf "  %s\n" "--wordlist, -w WORDLIST_ARG"
-    printf "    Wordlist to fuzz (default:\n    dns:/opt/fuzzdb/discovery/dns/dnsmapCommonSubdomains.txt dir:)\n"
+    printf "  %s\n" "$(magenta "--wordlist, -w WORDLIST_ARG")"
+    printf "    Wordlist to fuzz (default: fuzzdb)\n"
     echo
 
     # :flag.usage
-    printf "  %s\n" "--secure"
+    printf "  %s\n" "$(magenta "--secure")"
     printf "    Set the protocol to use https\n"
     echo
 
     # :command.usage_fixed_flags
-    printf "  %s\n" "--help, -h"
+    printf "  %s\n" "$(magenta "--help, -h")"
     printf "    Show this help\n"
     echo
 
     # :command.usage_args
-    printf "%s\n" "Arguments:"
+    printf "%s\n" "$(bold "Arguments:")"
 
     # :argument.usage
-    printf "  %s\n" "TARGET"
+    printf "  %s\n" "$(blue "TARGET")"
     printf "    Target url\n"
     echo
 
     # :command.usage_examples
-    printf "%s\n" "Examples:"
+    printf "%s\n" "$(bold "Examples:")"
     printf "  t fuzz example.com\n"
     echo
 
@@ -279,26 +279,22 @@ cyan_underlined() { print_in_color "\e[4;36m" "$*"; }
 # :command.function
 h_dns_command() {
   # src/dns_command.sh
-  target=${args[target]}
   tool=${args[--tool]}
   type=${args[--type]}
 
-  if [[ -z $tool ]]; then
-    tool=dig
-  fi
+  # default tool
+  checkAndSetIfEmpty tool "dig"
 
-  if [[ -z $type ]]; then
-    type=any
-  fi
+  if [[ "$tool" == "dig" ]]; then
+    if [[ ! $(command -v "$tool") ]]; then
+      echo -e "$(red Missing "$tool")"
+      exit 1
+    fi
 
-  command="$tool $target -t $type"
+    # default type
+    checkAndSetIfEmpty type "any"
 
-  # print
-  echo -e "$(green Command:)" "$(yellow "$command")"
-
-  # execute
-  if [[ -z $DEBUG ]]; then
-    eval "$command"
+    command="$tool $target -t $type"
   fi
 
 }
@@ -306,20 +302,12 @@ h_dns_command() {
 # :command.function
 h_fuzz_command() {
   # src/fuzz_command.sh
-  target=${args[target]}
   tool=${args[--tool]}
   type=${args[--type]}
+
+  # flags
   wordlist=${args[--wordlist]}
   secure=${args[--secure]}
-
-  if [[ -z $target ]]; then
-    if [[ -z $RHOST ]]; then
-      echo -e "$(red Invalid target/RHOST)"
-      exit 1
-    fi
-
-    target=$RHOST
-  fi
 
   # default tool
   checkAndSetIfEmpty tool "ffuf"
@@ -329,6 +317,7 @@ h_fuzz_command() {
       echo -e "$(red Missing "$tool")"
       exit 1
     fi
+
     # default action
     checkAndSetIfEmpty type "dns"
 
@@ -356,14 +345,6 @@ h_fuzz_command() {
 
     # form the command
     command="$tool -c $url $wordlist $params"
-
-    # print
-    echo -e "$(green Command:)" "$(yellow "$command")"
-  fi
-
-  # execute
-  if [[ -z $DEBUG ]]; then
-    eval "$command"
   fi
 
 }
@@ -632,11 +613,31 @@ before_hook() {
   # src/before.sh
   echo "==[ Before Hook Called ]=="
   inspect_args
+
+  target=${args[target]}
+
+  if [[ -z $target ]]; then
+    if [[ -z $RHOST ]]; then
+      echo -e "$(red Invalid target/RHOST)"
+      exit 1
+    fi
+
+    target=$RHOST
+  fi
+
 }
 
 after_hook() {
   # src/after.sh
-  echo "==[ After Hook Called ]=="
+
+  # print
+  echo -e "$(green Running command:)" "$(yellow "$command")"
+
+  # execute
+  if [[ -z $DEBUG ]]; then
+    eval "$command"
+  fi
+
 }
 
 # :command.initialize

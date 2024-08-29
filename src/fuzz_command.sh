@@ -1,17 +1,9 @@
-target=${args[target]}
 tool=${args[--tool]}
 type=${args[--type]}
+
+# flags
 wordlist=${args[--wordlist]}
 secure=${args[--secure]}
-
-if [[ -z $target ]]; then
-  if [[ -z $RHOST ]]; then
-    echo -e "$(red Invalid target/RHOST)"
-    exit 1
-  fi
-
-  target=$RHOST
-fi
 
 # default tool
 checkAndSetIfEmpty tool "ffuf"
@@ -21,6 +13,7 @@ if [[ "$tool" == "ffuf" ]]; then
     echo -e "$(red Missing "$tool")"
     exit 1
   fi
+
   # default action
   checkAndSetIfEmpty type "dns"
 
@@ -48,12 +41,4 @@ if [[ "$tool" == "ffuf" ]]; then
 
   # form the command
   command="$tool -c $url $wordlist $params"
-
-  # print
-  echo -e "$(green Command:)" "$(yellow "$command")"
-fi
-
-# execute
-if [[ -z $DEBUG ]]; then
-  eval "$command"
 fi
