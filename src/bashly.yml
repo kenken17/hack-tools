@@ -4,6 +4,18 @@ version: 0.1.0
 environment_variables:
   - name: RHOST
     private: false
+  - name: DNS_WORDLIST_SMALL
+    default: /opt/seclists/Discovery/Web-Content/raft-small-directories-lowercase.txt
+  - name: DNS_WORDLIST_MEDIUM
+    default: /opt/seclists/Discovery/Web-Content/raft-medium-directories-lowercase.txt
+  - name: DNS_WORDLIST_LARGE
+    default: /opt/seclists/Discovery/Web-Content/raft-large-directories-lowercase.txt
+  - name: FILE_WORDLIST_SMALL
+    default: /opt/seclists/Discovery/Web-Content/raft-small-files-lowercase.txt
+  - name: FILE_WORDLIST_MEDIUM
+    default: /opt/seclists/Discovery/Web-Content/raft-medium-files-lowercase.txt
+  - name: FILE_WORDLIST_LARGE
+    default: /opt/seclists/Discovery/Web-Content/raft-large-files-lowercase.txt
 commands:
   - name: dns
     help: DNS related actions
@@ -13,6 +25,9 @@ commands:
     flags:
       - long: --tool
         help: "Tool for dns related actions (default: dig)"
+        arg: tool_arg
+      - long: --flag
+        help: "Extra flags that pass into the tool"
         arg: tool_arg
       - long: --type
         arg: type_arg
@@ -37,6 +52,10 @@ commands:
       - long: --wordlist
         arg: wordlist_arg
         help: "Wordlist to fuzz (default: fuzzdb)"
+      - long: --size
+        arg: size_arg
+        allowed: ["small", "medium", "large"]
+        help: "The wordlist size"
       - long: --secure
         help: "Set the protocol to use https"
     examples:

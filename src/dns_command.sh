@@ -1,4 +1,5 @@
 tool=${args[--tool]}
+flag=${args[--flag]}
 type=${args[--type]}
 server=${args[--server]}
 
@@ -16,5 +17,5 @@ if [[ "$tool" == "dig" ]]; then
 
   checkAndSetIfExisted server " @$server" server
 
-  command="$tool$server $target -t $type"
+  command="$tool$server $target -t $type $flag"
 fi

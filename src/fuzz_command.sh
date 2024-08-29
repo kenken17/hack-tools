@@ -1,9 +1,11 @@
 tool=${args[--tool]}
+flag=${args[--flag]}
 type=${args[--type]}
 
 # flags
 wordlist=${args[--wordlist]}
 secure=${args[--secure]}
+size=${args[--size]}
 
 # default tool
 checkAndSetIfEmpty tool "ffuf"
@@ -20,11 +22,22 @@ if [[ "$tool" == "ffuf" ]]; then
   if [[ -n $wordlist ]]; then
     wordlist="-w $wordlist"
   else
+    dnswordlist=$DNS_WORDLIST_MEDIUM
+    checkAndSetIfEqual size "small" "$DNS_WORDLIST_SMALL" dnswordlist
+    checkAndSetIfEqual size "medium" "$DNS_WORDLIST_MEDIUM" dnswordlist
+    checkAndSetIfEqual size "large" "$DNS_WORDLIST_LARGE" dnswordlist
+
+    filewordlist=$FILE_WORDLIST_MEDIUM
+    checkAndSetIfEqual size "small" "$FILE_WORDLIST_SMALL" filewordlist
+    checkAndSetIfEqual size "medium" "$FILE_WORDLIST_MEDIUM" filewordlist
+    checkAndSetIfEqual size "large" "$FILE_WORDLIST_LARGE" filewordlist
+
     wordlist=x
+    checkAndSetIfEqual type "dns" "-w \"$dnswordlist\"" wordlist
 
-    checkAndSetIfEqual type "dns" "-w \"/opt/fuzzdb/discovery/dns/dnsmapCommonSubdomains.txt\"" wordlist
+    checkAndSetIfEqual type "dir" "-w \"$dnswordlist\"" wordlist
 
-    checkAndSetIfEqual type "dir" "-w \"/opt/fuzzdb/discovery/predictable-filepaths/filename-dirname-bruteforce/raft-small-directories-lowercase.txt\"" wordlist
+    checkAndSetIfEqual type "file" "-w \"$filewordlist\"" wordlist
   fi
 
   # default http
@@ -34,11 +47,13 @@ if [[ "$tool" == "ffuf" ]]; then
   # default host
   params="-H \"Host: FUZZ.$target\""
   checkAndSetIfEqual type "dir" "" params
+  checkAndSetIfEqual type "file" "" params
 
   # default just domain
   url="-u $protocol://$target"
   checkAndSetIfEqual type "dir" "-u $protocol://$target/FUZZ" url
+  checkAndSetIfEqual type "file" "-u $protocol://$target/FUZZ" url
 
   # form the command
-  command="$tool -c $url $wordlist $params"
+  command="$tool -c $url $wordlist $params $flag"
 fi

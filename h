@@ -58,6 +58,42 @@ h_usage() {
     printf "\n"
     echo
 
+    # :environment_variable.usage
+    printf "  %s\n" "$(cyan "DNS_WORDLIST_SMALL")"
+    printf "\n"
+    printf "    Default: /opt/seclists/Discovery/Web-Content/raft-small-directories-lowercase.txt\n"
+    echo
+
+    # :environment_variable.usage
+    printf "  %s\n" "$(cyan "DNS_WORDLIST_MEDIUM")"
+    printf "\n"
+    printf "    Default: /opt/seclists/Discovery/Web-Content/raft-medium-directories-lowercase.txt\n"
+    echo
+
+    # :environment_variable.usage
+    printf "  %s\n" "$(cyan "DNS_WORDLIST_LARGE")"
+    printf "\n"
+    printf "    Default: /opt/seclists/Discovery/Web-Content/raft-large-directories-lowercase.txt\n"
+    echo
+
+    # :environment_variable.usage
+    printf "  %s\n" "$(cyan "FILE_WORDLIST_SMALL")"
+    printf "\n"
+    printf "    Default: /opt/seclists/Discovery/Web-Content/raft-small-files-lowercase.txt\n"
+    echo
+
+    # :environment_variable.usage
+    printf "  %s\n" "$(cyan "FILE_WORDLIST_MEDIUM")"
+    printf "\n"
+    printf "    Default: /opt/seclists/Discovery/Web-Content/raft-medium-files-lowercase.txt\n"
+    echo
+
+    # :environment_variable.usage
+    printf "  %s\n" "$(cyan "FILE_WORDLIST_LARGE")"
+    printf "\n"
+    printf "    Default: /opt/seclists/Discovery/Web-Content/raft-large-files-lowercase.txt\n"
+    echo
+
   fi
 }
 
@@ -86,6 +122,11 @@ h_dns_usage() {
     # :flag.usage
     printf "  %s\n" "$(magenta "--tool TOOL_ARG")"
     printf "    Tool for dns related actions (default: dig)\n"
+    echo
+
+    # :flag.usage
+    printf "  %s\n" "$(magenta "--flag TOOL_ARG")"
+    printf "    Extra flags that pass into the tool\n"
     echo
 
     # :flag.usage
@@ -154,6 +195,12 @@ h_fuzz_usage() {
     # :flag.usage
     printf "  %s\n" "$(magenta "--wordlist WORDLIST_ARG")"
     printf "    Wordlist to fuzz (default: fuzzdb)\n"
+    echo
+
+    # :flag.usage
+    printf "  %s\n" "$(magenta "--size SIZE_ARG")"
+    printf "    The wordlist size\n"
+    printf "    Allowed: small, medium, large\n"
     echo
 
     # :flag.usage
@@ -285,6 +332,7 @@ cyan_underlined() { print_in_color "\e[4;36m" "$*"; }
 h_dns_command() {
   # src/dns_command.sh
   tool=${args[--tool]}
+  flag=${args[--flag]}
   type=${args[--type]}
   server=${args[--server]}
 
@@ -302,7 +350,7 @@ h_dns_command() {
 
     checkAndSetIfExisted server " @$server" server
 
-    command="$tool$server $target -t $type"
+    command="$tool$server $target -t $type $flag"
   fi
 
 }
@@ -311,11 +359,13 @@ h_dns_command() {
 h_fuzz_command() {
   # src/fuzz_command.sh
   tool=${args[--tool]}
+  flag=${args[--flag]}
   type=${args[--type]}
 
   # flags
   wordlist=${args[--wordlist]}
   secure=${args[--secure]}
+  size=${args[--size]}
 
   # default tool
   checkAndSetIfEmpty tool "ffuf"
@@ -332,11 +382,22 @@ h_fuzz_command() {
     if [[ -n $wordlist ]]; then
       wordlist="-w $wordlist"
     else
+      dnswordlist=$DNS_WORDLIST_MEDIUM
+      checkAndSetIfEqual size "small" "$DNS_WORDLIST_SMALL" dnswordlist
+      checkAndSetIfEqual size "medium" "$DNS_WORDLIST_MEDIUM" dnswordlist
+      checkAndSetIfEqual size "large" "$DNS_WORDLIST_LARGE" dnswordlist
+
+      filewordlist=$FILE_WORDLIST_MEDIUM
+      checkAndSetIfEqual size "small" "$FILE_WORDLIST_SMALL" filewordlist
+      checkAndSetIfEqual size "medium" "$FILE_WORDLIST_MEDIUM" filewordlist
+      checkAndSetIfEqual size "large" "$FILE_WORDLIST_LARGE" filewordlist
+
       wordlist=x
+      checkAndSetIfEqual type "dns" "-w \"$dnswordlist\"" wordlist
 
-      checkAndSetIfEqual type "dns" "-w \"/opt/fuzzdb/discovery/dns/dnsmapCommonSubdomains.txt\"" wordlist
+      checkAndSetIfEqual type "dir" "-w \"$dnswordlist\"" wordlist
 
-      checkAndSetIfEqual type "dir" "-w \"/opt/fuzzdb/discovery/predictable-filepaths/filename-dirname-bruteforce/raft-small-directories-lowercase.txt\"" wordlist
+      checkAndSetIfEqual type "file" "-w \"$filewordlist\"" wordlist
     fi
 
     # default http
@@ -346,13 +407,15 @@ h_fuzz_command() {
     # default host
     params="-H \"Host: FUZZ.$target\""
     checkAndSetIfEqual type "dir" "" params
+    checkAndSetIfEqual type "file" "" params
 
     # default just domain
     url="-u $protocol://$target"
     checkAndSetIfEqual type "dir" "-u $protocol://$target/FUZZ" url
+    checkAndSetIfEqual type "file" "-u $protocol://$target/FUZZ" url
 
     # form the command
-    command="$tool -c $url $wordlist $params"
+    command="$tool -c $url $wordlist $params $flag"
   fi
 
 }
@@ -381,8 +444,21 @@ parse_requirements() {
   done
 
   # :command.environment_variables_filter
+  # :command.environment_variables_default
+  export DNS_WORDLIST_SMALL="${DNS_WORDLIST_SMALL:-/opt/seclists/Discovery/Web-Content/raft-small-directories-lowercase.txt}"
+  export DNS_WORDLIST_MEDIUM="${DNS_WORDLIST_MEDIUM:-/opt/seclists/Discovery/Web-Content/raft-medium-directories-lowercase.txt}"
+  export DNS_WORDLIST_LARGE="${DNS_WORDLIST_LARGE:-/opt/seclists/Discovery/Web-Content/raft-large-directories-lowercase.txt}"
+  export FILE_WORDLIST_SMALL="${FILE_WORDLIST_SMALL:-/opt/seclists/Discovery/Web-Content/raft-small-files-lowercase.txt}"
+  export FILE_WORDLIST_MEDIUM="${FILE_WORDLIST_MEDIUM:-/opt/seclists/Discovery/Web-Content/raft-medium-files-lowercase.txt}"
+  export FILE_WORDLIST_LARGE="${FILE_WORDLIST_LARGE:-/opt/seclists/Discovery/Web-Content/raft-large-files-lowercase.txt}"
 
   env_var_names+=("RHOST")
+  env_var_names+=("DNS_WORDLIST_SMALL")
+  env_var_names+=("DNS_WORDLIST_MEDIUM")
+  env_var_names+=("DNS_WORDLIST_LARGE")
+  env_var_names+=("FILE_WORDLIST_SMALL")
+  env_var_names+=("FILE_WORDLIST_MEDIUM")
+  env_var_names+=("FILE_WORDLIST_LARGE")
 
   # :command.command_filter
   action=${1:-}
@@ -475,6 +551,20 @@ h_dns_parse_requirements() {
           shift
         else
           printf "%s\n" "--tool requires an argument: --tool TOOL_ARG" >&2
+          exit 1
+        fi
+        ;;
+
+      # :flag.case
+      --flag)
+
+        # :flag.case_arg
+        if [[ -n ${2+x} ]]; then
+          args['--flag']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--flag requires an argument: --flag TOOL_ARG" >&2
           exit 1
         fi
         ;;
@@ -599,6 +689,20 @@ h_fuzz_parse_requirements() {
         ;;
 
       # :flag.case
+      --size)
+
+        # :flag.case_arg
+        if [[ -n ${2+x} ]]; then
+          args['--size']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--size requires an argument: --size SIZE_ARG" >&2
+          exit 1
+        fi
+        ;;
+
+      # :flag.case
       --secure)
 
         # :flag.case_no_arg
@@ -627,6 +731,12 @@ h_fuzz_parse_requirements() {
 
     esac
   done
+
+  # :command.whitelist_filter
+  if [[ ${args['--size']:-} ]] && [[ ! ${args['--size']:-} =~ ^(small|medium|large)$ ]]; then
+    printf "%s\n" "--size must be one of: small, medium, large" >&2
+    exit 1
+  fi
 
 }
 
@@ -667,6 +777,14 @@ initialize() {
   version="0.1.0"
   long_usage=''
   set -e
+
+  # :command.environment_variables_default
+  export DNS_WORDLIST_SMALL="${DNS_WORDLIST_SMALL:-/opt/seclists/Discovery/Web-Content/raft-small-directories-lowercase.txt}"
+  export DNS_WORDLIST_MEDIUM="${DNS_WORDLIST_MEDIUM:-/opt/seclists/Discovery/Web-Content/raft-medium-directories-lowercase.txt}"
+  export DNS_WORDLIST_LARGE="${DNS_WORDLIST_LARGE:-/opt/seclists/Discovery/Web-Content/raft-large-directories-lowercase.txt}"
+  export FILE_WORDLIST_SMALL="${FILE_WORDLIST_SMALL:-/opt/seclists/Discovery/Web-Content/raft-small-files-lowercase.txt}"
+  export FILE_WORDLIST_MEDIUM="${FILE_WORDLIST_MEDIUM:-/opt/seclists/Discovery/Web-Content/raft-medium-files-lowercase.txt}"
+  export FILE_WORDLIST_LARGE="${FILE_WORDLIST_LARGE:-/opt/seclists/Discovery/Web-Content/raft-large-files-lowercase.txt}"
 
   # src/initialize.sh
   # Check and set if emtpy
