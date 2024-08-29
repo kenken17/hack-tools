@@ -4,8 +4,8 @@
 ## before running any command (but after processing its arguments).
 ##
 ## You can safely delete this file if you do not need it.
-echo "==[ Before Hook Called ]=="
-inspect_args
+# echo "==[ Before Hook Called ]=="
+# inspect_args
 
 target=${args[target]}
 

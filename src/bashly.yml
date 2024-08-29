@@ -24,19 +24,21 @@ commands:
         help: "Target url"
     flags:
       - long: --tool
+        arg: tool_arg
+        allowed: ["dig"]
         help: "Tool for dns related actions (default: dig)"
-        arg: tool_arg
       - long: --flag
-        help: "Extra flags that pass into the tool"
         arg: tool_arg
+        help: "Extra flags that pass into the tool"
       - long: --type
         arg: type_arg
+        allowed: ["any", "mx", "txt", "ns", "cname", "soa", "aaaa"]
         help: "Type of server to discover (default: any)"
       - long: --server
         arg: server_arg
-        help: "Set the name server"
+        help: "Set the server ip"
     examples:
-      - t dns example.com
+      - h dns example.com --server 8.8.8.8
   - name: fuzz
     help: Fuzz related actions
     args:
@@ -44,14 +46,16 @@ commands:
         help: "Target url"
     flags:
       - long: --tool
-        help: "Tool for fuzz related actions (default: ffuf)"
         arg: tool_arg
+        allowed: ["ffuf"]
+        help: "Tool for fuzz related actions (default: ffuf)"
       - long: --type
         arg: type_arg
+        allowed: ["dns", "dir", "file"]
         help: "Type of thing to fuzz (default: dns)"
       - long: --wordlist
         arg: wordlist_arg
-        help: "Wordlist to fuzz (default: fuzzdb)"
+        help: "Wordlist to fuzz (default: seclist)"
       - long: --size
         arg: size_arg
         allowed: ["small", "medium", "large"]
@@ -59,4 +63,4 @@ commands:
       - long: --secure
         help: "Set the protocol to use https"
     examples:
-      - t fuzz example.com
+      - h fuzz example.com --type dir --secure --size large

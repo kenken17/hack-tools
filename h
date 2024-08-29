@@ -122,6 +122,7 @@ h_dns_usage() {
     # :flag.usage
     printf "  %s\n" "$(magenta "--tool TOOL_ARG")"
     printf "    Tool for dns related actions (default: dig)\n"
+    printf "    Allowed: dig\n"
     echo
 
     # :flag.usage
@@ -132,11 +133,12 @@ h_dns_usage() {
     # :flag.usage
     printf "  %s\n" "$(magenta "--type TYPE_ARG")"
     printf "    Type of server to discover (default: any)\n"
+    printf "    Allowed: any, mx, txt, ns, cname, soa, aaaa\n"
     echo
 
     # :flag.usage
     printf "  %s\n" "$(magenta "--server SERVER_ARG")"
-    printf "    Set the name server\n"
+    printf "    Set the server ip\n"
     echo
 
     # :command.usage_fixed_flags
@@ -154,7 +156,7 @@ h_dns_usage() {
 
     # :command.usage_examples
     printf "%s\n" "$(bold "Examples:")"
-    printf "  t dns example.com\n"
+    printf "  h dns example.com --server 8.8.8.8\n"
     echo
 
   fi
@@ -185,16 +187,18 @@ h_fuzz_usage() {
     # :flag.usage
     printf "  %s\n" "$(magenta "--tool TOOL_ARG")"
     printf "    Tool for fuzz related actions (default: ffuf)\n"
+    printf "    Allowed: ffuf\n"
     echo
 
     # :flag.usage
     printf "  %s\n" "$(magenta "--type TYPE_ARG")"
     printf "    Type of thing to fuzz (default: dns)\n"
+    printf "    Allowed: dns, dir, file\n"
     echo
 
     # :flag.usage
     printf "  %s\n" "$(magenta "--wordlist WORDLIST_ARG")"
-    printf "    Wordlist to fuzz (default: fuzzdb)\n"
+    printf "    Wordlist to fuzz (default: seclist)\n"
     echo
 
     # :flag.usage
@@ -223,7 +227,7 @@ h_fuzz_usage() {
 
     # :command.usage_examples
     printf "%s\n" "$(bold "Examples:")"
-    printf "  t fuzz example.com\n"
+    printf "  h fuzz example.com --type dir --secure --size large\n"
     echo
 
   fi
@@ -619,6 +623,16 @@ h_dns_parse_requirements() {
     esac
   done
 
+  # :command.whitelist_filter
+  if [[ ${args['--tool']:-} ]] && [[ ! ${args['--tool']:-} =~ ^(dig)$ ]]; then
+    printf "%s\n" "--tool must be one of: dig" >&2
+    exit 1
+  fi
+  if [[ ${args['--type']:-} ]] && [[ ! ${args['--type']:-} =~ ^(any|mx|txt|ns|cname|soa|aaaa)$ ]]; then
+    printf "%s\n" "--type must be one of: any, mx, txt, ns, cname, soa, aaaa" >&2
+    exit 1
+  fi
+
 }
 
 # :command.parse_requirements
@@ -733,6 +747,14 @@ h_fuzz_parse_requirements() {
   done
 
   # :command.whitelist_filter
+  if [[ ${args['--tool']:-} ]] && [[ ! ${args['--tool']:-} =~ ^(ffuf)$ ]]; then
+    printf "%s\n" "--tool must be one of: ffuf" >&2
+    exit 1
+  fi
+  if [[ ${args['--type']:-} ]] && [[ ! ${args['--type']:-} =~ ^(dns|dir|file)$ ]]; then
+    printf "%s\n" "--type must be one of: dns, dir, file" >&2
+    exit 1
+  fi
   if [[ ${args['--size']:-} ]] && [[ ! ${args['--size']:-} =~ ^(small|medium|large)$ ]]; then
     printf "%s\n" "--size must be one of: small, medium, large" >&2
     exit 1
@@ -743,8 +765,8 @@ h_fuzz_parse_requirements() {
 # :command.user_hooks
 before_hook() {
   # src/before.sh
-  echo "==[ Before Hook Called ]=="
-  inspect_args
+  # echo "==[ Before Hook Called ]=="
+  # inspect_args
 
   target=${args[target]}
 
