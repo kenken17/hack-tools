@@ -17,7 +17,7 @@ if [[ "$tool" == "ffuf" ]]; then
   fi
 
   # default action
-  checkAndSetIfEmpty type "dns"
+  checkAndSetIfEmpty type "dir"
 
   if [[ -n $wordlist ]]; then
     wordlist="-w $wordlist"
