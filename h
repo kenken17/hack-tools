@@ -89,8 +89,13 @@ h_dns_usage() {
     echo
 
     # :flag.usage
-    printf "  %s\n" "$(magenta "--type, -t TYPE_ARG")"
+    printf "  %s\n" "$(magenta "--type TYPE_ARG")"
     printf "    Type of server to discover (default: any)\n"
+    echo
+
+    # :flag.usage
+    printf "  %s\n" "$(magenta "--server SERVER_ARG")"
+    printf "    Set the name server\n"
     echo
 
     # :command.usage_fixed_flags
@@ -142,12 +147,12 @@ h_fuzz_usage() {
     echo
 
     # :flag.usage
-    printf "  %s\n" "$(magenta "--type, -t TYPE_ARG")"
+    printf "  %s\n" "$(magenta "--type TYPE_ARG")"
     printf "    Type of thing to fuzz (default: dns)\n"
     echo
 
     # :flag.usage
-    printf "  %s\n" "$(magenta "--wordlist, -w WORDLIST_ARG")"
+    printf "  %s\n" "$(magenta "--wordlist WORDLIST_ARG")"
     printf "    Wordlist to fuzz (default: fuzzdb)\n"
     echo
 
@@ -281,6 +286,7 @@ h_dns_command() {
   # src/dns_command.sh
   tool=${args[--tool]}
   type=${args[--type]}
+  server=${args[--server]}
 
   # default tool
   checkAndSetIfEmpty tool "dig"
@@ -294,7 +300,9 @@ h_dns_command() {
     # default type
     checkAndSetIfEmpty type "any"
 
-    command="$tool $target -t $type"
+    checkAndSetIfExisted server " @$server" server
+
+    command="$tool$server $target -t $type"
   fi
 
 }
@@ -472,7 +480,7 @@ h_dns_parse_requirements() {
         ;;
 
       # :flag.case
-      --type | -t)
+      --type)
 
         # :flag.case_arg
         if [[ -n ${2+x} ]]; then
@@ -480,7 +488,21 @@ h_dns_parse_requirements() {
           shift
           shift
         else
-          printf "%s\n" "--type requires an argument: --type, -t TYPE_ARG" >&2
+          printf "%s\n" "--type requires an argument: --type TYPE_ARG" >&2
+          exit 1
+        fi
+        ;;
+
+      # :flag.case
+      --server)
+
+        # :flag.case_arg
+        if [[ -n ${2+x} ]]; then
+          args['--server']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--server requires an argument: --server SERVER_ARG" >&2
           exit 1
         fi
         ;;
@@ -549,7 +571,7 @@ h_fuzz_parse_requirements() {
         ;;
 
       # :flag.case
-      --type | -t)
+      --type)
 
         # :flag.case_arg
         if [[ -n ${2+x} ]]; then
@@ -557,13 +579,13 @@ h_fuzz_parse_requirements() {
           shift
           shift
         else
-          printf "%s\n" "--type requires an argument: --type, -t TYPE_ARG" >&2
+          printf "%s\n" "--type requires an argument: --type TYPE_ARG" >&2
           exit 1
         fi
         ;;
 
       # :flag.case
-      --wordlist | -w)
+      --wordlist)
 
         # :flag.case_arg
         if [[ -n ${2+x} ]]; then
@@ -571,7 +593,7 @@ h_fuzz_parse_requirements() {
           shift
           shift
         else
-          printf "%s\n" "--wordlist requires an argument: --wordlist, -w WORDLIST_ARG" >&2
+          printf "%s\n" "--wordlist requires an argument: --wordlist WORDLIST_ARG" >&2
           exit 1
         fi
         ;;
@@ -661,7 +683,7 @@ initialize() {
     local -n item=$1
     local -n param_to_set=$3
 
-    if [[ $item == 1 ]]; then
+    if [[ -n $item ]]; then
       if [[ -n $param_to_set ]]; then
         param_to_set=$2
       else

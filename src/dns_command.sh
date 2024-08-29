@@ -1,5 +1,6 @@
 tool=${args[--tool]}
 type=${args[--type]}
+server=${args[--server]}
 
 # default tool
 checkAndSetIfEmpty tool "dig"
@@ -13,5 +14,7 @@ if [[ "$tool" == "dig" ]]; then
   # default type
   checkAndSetIfEmpty type "any"
 
-  command="$tool $target -t $type"
+  checkAndSetIfExisted server " @$server" server
+
+  command="$tool$server $target -t $type"
 fi

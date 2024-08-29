@@ -12,7 +12,7 @@ checkAndSetIfExisted() {
   local -n item=$1
   local -n param_to_set=$3
 
-  if [[ $item == 1 ]]; then
+  if [[ -n $item ]]; then
     if [[ -n $param_to_set ]]; then
       param_to_set=$2
     else

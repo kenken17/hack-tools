@@ -15,9 +15,11 @@ commands:
         help: "Tool for dns related actions (default: dig)"
         arg: tool_arg
       - long: --type
-        short: -t
         arg: type_arg
         help: "Type of server to discover (default: any)"
+      - long: --server
+        arg: server_arg
+        help: "Set the name server"
     examples:
       - t dns example.com
   - name: fuzz
@@ -30,11 +32,9 @@ commands:
         help: "Tool for fuzz related actions (default: ffuf)"
         arg: tool_arg
       - long: --type
-        short: -t
         arg: type_arg
         help: "Type of thing to fuzz (default: dns)"
       - long: --wordlist
-        short: -w
         arg: wordlist_arg
         help: "Wordlist to fuzz (default: fuzzdb)"
       - long: --secure
