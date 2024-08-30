@@ -120,6 +120,11 @@ h_dns_usage() {
 
     # :command.usage_flags
     # :flag.usage
+    printf "  %s\n" "$(magenta "--debug")"
+    printf "    For debugging purpose\n"
+    echo
+
+    # :flag.usage
     printf "  %s\n" "$(magenta "--tool TOOL_ARG")"
     printf "    Tool for dns related actions (default: dig)\n"
     printf "    Allowed: dig\n"
@@ -184,6 +189,11 @@ h_fuzz_usage() {
     printf "%s\n" "$(bold "Options:")"
 
     # :command.usage_flags
+    # :flag.usage
+    printf "  %s\n" "$(magenta "--debug")"
+    printf "    For debugging purpose\n"
+    echo
+
     # :flag.usage
     printf "  %s\n" "$(magenta "--tool TOOL_ARG")"
     printf "    Tool for fuzz related actions (default: ffuf)\n"
@@ -546,6 +556,14 @@ h_dns_parse_requirements() {
     key="$1"
     case "$key" in
       # :flag.case
+      --debug)
+
+        # :flag.case_no_arg
+        args['--debug']=1
+        shift
+        ;;
+
+      # :flag.case
       --tool)
 
         # :flag.case_arg
@@ -660,6 +678,14 @@ h_fuzz_parse_requirements() {
   while [[ $# -gt 0 ]]; do
     key="$1"
     case "$key" in
+      # :flag.case
+      --debug)
+
+        # :flag.case_no_arg
+        args['--debug']=1
+        shift
+        ;;
+
       # :flag.case
       --tool)
 
@@ -783,12 +809,13 @@ before_hook() {
 
 after_hook() {
   # src/after.sh
+  debug=${args[--debug]}
 
   # print
   echo -e "$(green Running command:)" "$(yellow "$command")"
 
   # execute
-  if [[ -z $DEBUG ]]; then
+  if [[ -z $DEBUG ]] && [[ -z $debug ]]; then
     eval "$command"
   fi
 

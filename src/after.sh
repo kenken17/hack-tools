@@ -4,12 +4,12 @@
 ## after running any command.
 ##
 ## You can safely delete this file if you do not need it.
+debug=${args[--debug]}
 
 # print
 echo -e "$(green Running command:)" "$(yellow "$command")"
 
 # execute
-if [[ -z $DEBUG ]]; then
+if [[ -z $DEBUG ]] && [[ -z $debug ]]; then
   eval "$command"
 fi
-

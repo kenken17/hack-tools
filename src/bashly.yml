@@ -23,6 +23,8 @@ commands:
       - name: target
         help: "Target url"
     flags:
+      - long: --debug
+        help: "For debugging purpose"
       - long: --tool
         arg: tool_arg
         allowed: ["dig"]
@@ -45,6 +47,8 @@ commands:
       - name: target
         help: "Target url"
     flags:
+      - long: --debug
+        help: "For debugging purpose"
       - long: --tool
         arg: tool_arg
         allowed: ["ffuf"]
